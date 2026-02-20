@@ -239,13 +239,14 @@ Each `register*Tools` function receives the `McpServer` instance and calls `serv
 
 ## Completion Checklist
 
-- [ ] `package.json` updated with all dependencies and scripts
-- [ ] `tsconfig.json` configured and `tsc --noEmit` passes
-- [ ] `apiClient.ts` and `endpoints.ts` implemented
-- [ ] All 4 shared type files defined
-- [ ] All 5 tool group files implemented (14 tools total)
-- [ ] Response formatters implemented for all data types
-- [ ] `BACKEND_URL` env var loaded and documented
-- [ ] `src/index.ts` wires all tools and connects via stdio transport
+- [x] `package.json` updated with all dependencies and scripts
+- [x] `tsconfig.json` configured and `tsc --noEmit` passes
+- [x] `apiClient.ts` and `endpoints.ts` implemented
+- [x] All 4 shared type files defined
+- [x] All 5 tool group files implemented (14 tools total)
+- [x] Response formatters implemented for all data types
+- [x] `BACKEND_URL` env var loaded and documented
+- [x] `src/index.ts` wires all tools and connects via stdio transport
 - [ ] MCP Inspector smoke test passes for all tools
-- [ ] Formatter unit tests written
+- [x] Formatter unit tests written
+- [x] Tool integration tests written (51 tests, all passing)
