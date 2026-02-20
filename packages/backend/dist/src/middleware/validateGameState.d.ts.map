@@ -1,1 +1,0 @@
-{"version":3,"file":"validateGameState.d.ts","sourceRoot":"","sources":["../../../src/middleware/validateGameState.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,YAAY,EAAE,MAAM,SAAS,CAAC;AAI1D,OAAO,EAAE,SAAS,EAAE,MAAM,eAAe,CAAC;AAE1C,wBAAgB,YAAY,CAAC,aAAa,EAAE,SAAS,IACrC,KAAK,OAAO,EAAE,MAAM,QAAQ,EAAE,MAAM,YAAY,KAAG,OAAO,CAAC,IAAI,CAAC,CAiB/E"}

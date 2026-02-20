@@ -1,1 +1,0 @@
-{"version":3,"file":"pokedexRoutes.js","sourceRoot":"","sources":["../../../src/routes/pokedexRoutes.ts"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAAA,qCAAiC;AACjC,oFAAsE;AAEtE,MAAM,MAAM,GAAG,IAAA,gBAAM,GAAE,CAAC;AAExB,MAAM,CAAC,GAAG,CAAC,oBAAoB,EAAE,iBAAiB,CAAC,UAAU,CAAC,CAAC;AAC/D,MAAM,CAAC,GAAG,CAAC,eAAe,EAAE,iBAAiB,CAAC,OAAO,CAAC,CAAC;AAEvD,kBAAe,MAAM,CAAC"}
