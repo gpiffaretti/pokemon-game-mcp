@@ -8,6 +8,13 @@
       "when": 1771549454937,
       "tag": "0000_dry_banshee",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771592672505,
+      "tag": "0001_drop_starting_pokemon_add_current_pokemon_id",
+      "breakpoints": true
     }
   ]
 }

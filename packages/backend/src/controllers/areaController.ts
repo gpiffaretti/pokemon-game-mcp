@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as areaService from '../services/areaService';
+import * as pokedexService from '../services/pokedexService';
+import { Area, AreaPokemon } from '../types/area';
+import { Pokemon } from '../types/pokemon';
 
 const moveToAreaSchema = z.object({
   areaId: z.number({ error: 'areaId must be a positive integer' }).int().positive(),
@@ -8,7 +11,7 @@ const moveToAreaSchema = z.object({
 
 export async function getCurrentArea(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const area = await areaService.getCurrentArea(req.params.gameId);
+    const area: Area = await areaService.getCurrentArea(req.params.gameId);
     res.json(area);
   } catch (err) {
     next(err);
@@ -22,7 +25,7 @@ export async function moveToArea(req: Request, res: Response, next: NextFunction
       res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
-    const area = await areaService.moveToArea(req.params.gameId, parsed.data.areaId);
+    const area: Area = await areaService.moveToArea(req.params.gameId, parsed.data.areaId);
     res.json(area);
   } catch (err) {
     next(err);
@@ -31,7 +34,8 @@ export async function moveToArea(req: Request, res: Response, next: NextFunction
 
 export async function findPokemonInArea(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const pokemon = await areaService.findPokemonInArea(req.params.gameId);
+    const areaPokemon: AreaPokemon = await areaService.findPokemonInArea(req.params.gameId);
+    const pokemon: Pokemon = await pokedexService.getPokemon(areaPokemon.pokemonId);
     res.json(pokemon);
   } catch (err) {
     next(err);

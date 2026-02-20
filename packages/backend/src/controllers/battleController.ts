@@ -10,9 +10,7 @@ const performMoveSchema = z.object({
   moveId: z.number({ error: 'moveId must be a positive integer' }).int().positive(),
 });
 
-const throwPokeballSchema = z.object({
-  wildPokemonId: z.number({ error: 'wildPokemonId must be a positive integer' }).int().positive(),
-});
+const throwPokeballSchema = z.object({});
 
 export async function startBattle(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -21,8 +19,8 @@ export async function startBattle(req: Request, res: Response, next: NextFunctio
       res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
-    await battleService.startBattle(req.params.gameId, parsed.data.wildPokemonId);
-    res.status(204).send();
+    const game = await battleService.startBattle(req.params.gameId, parsed.data.wildPokemonId);
+    res.json(game);
   } catch (err) {
     next(err);
   }
@@ -58,8 +56,8 @@ export async function throwPokeball(req: Request, res: Response, next: NextFunct
       res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
-    const result = await battleService.throwPokeball(req.params.gameId, parsed.data.wildPokemonId);
-    res.json(result);
+    const captured = await battleService.throwPokeball(req.params.gameId);
+    res.json(captured);
   } catch (err) {
     next(err);
   }

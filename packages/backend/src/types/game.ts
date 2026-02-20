@@ -1,3 +1,6 @@
+import { Pokemon } from './pokemon';
+import { Area } from './area';
+
 export enum GameState {
   SELECTING_STARTING_POKEMON = 'SELECTING_STARTING_POKEMON',
   EXPLORING = 'EXPLORING',
@@ -10,6 +13,7 @@ export interface Game {
   state: GameState;
   currentAreaId: number | null;
   wildPokemonId: number | null;
+  currentPokemonId: number | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -20,8 +24,12 @@ export interface CapturedPokemon {
   capturedAt: Date | null;
 }
 
-export interface StartingPokemon {
-  gameId: string;
-  pokemonId: number;
-  selectedAt: Date | null;
+export interface EnrichedGame {
+  id: string;
+  state: GameState;
+  currentArea: Area | null;
+  wildPokemon: Pokemon | null;
+  currentPokemon: Pokemon | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }

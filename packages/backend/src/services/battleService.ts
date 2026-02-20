@@ -1,22 +1,25 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../db/client';
 import { games } from '../db/schema';
-import { GameState } from '../types/game';
-import { MoveResult, BattleResult } from '../types/battle';
-import { Move } from '../types/pokemon';
-import { getPokemonMoves } from './pokedexService';
-import { capturePokemon, getStartingPokemon } from './pokemonService';
+import { Game, GameState, EnrichedGame } from '../types/game';
+import { MoveResult } from '../types/battle';
+import { Pokemon } from '../types/pokemon';
+import { getPokemon, getPokemonMoves } from './pokedexService';
+import { capturePokemon, getCurrentPokemonRaw } from './pokemonService';
+import { enrichGame } from './gameService';
 
-export async function startBattle(gameId: string, wildPokemonId: number): Promise<void> {
+export async function startBattle(gameId: string, wildPokemonId: number): Promise<EnrichedGame> {
   const rows = await db.select().from(games).where(eq(games.id, gameId));
   if (rows.length === 0) throw new Error('Game not found');
   if (rows[0].state !== GameState.EXPLORING) {
     throw new Error('Can only start a battle while exploring');
   }
-  await db
+  const updatedRows = await db
     .update(games)
     .set({ state: GameState.BATTLING, wildPokemonId, updatedAt: new Date() })
-    .where(eq(games.id, gameId));
+    .where(eq(games.id, gameId))
+    .returning();
+  return enrichGame(updatedRows[0] as Game);
 }
 
 export async function performMove(gameId: string, playerMoveId: number): Promise<MoveResult> {
@@ -28,11 +31,11 @@ export async function performMove(gameId: string, playerMoveId: number): Promise
   }
   if (!game.wildPokemonId) throw new Error('No wild pokemon in battle');
 
-  const starter = await getStartingPokemon(gameId);
-  if (!starter) throw new Error('No starting pokemon selected');
+  const current = await getCurrentPokemonRaw(gameId);
+  if (!current) throw new Error('No current pokemon selected');
 
   const [playerMoves, opponentMoves] = await Promise.all([
-    getPokemonMoves(starter.pokemonId),
+    getPokemonMoves(current.pokemonId),
     getPokemonMoves(game.wildPokemonId),
   ]);
 
@@ -56,19 +59,21 @@ export async function flee(gameId: string): Promise<void> {
     .where(eq(games.id, gameId));
 }
 
-export async function throwPokeball(gameId: string, wildPokemonId: number): Promise<BattleResult> {
+export async function throwPokeball(gameId: string): Promise<Pokemon> {
   const rows = await db.select().from(games).where(eq(games.id, gameId));
   if (rows.length === 0) throw new Error('Game not found');
-  if (rows[0].state !== GameState.BATTLING) {
+  const game = rows[0];
+  if (game.state !== GameState.BATTLING) {
     throw new Error('No active battle');
   }
+  if (!game.wildPokemonId) throw new Error('No wild pokemon in battle');
 
-  await capturePokemon(gameId, wildPokemonId);
+  await capturePokemon(gameId, game.wildPokemonId);
 
   await db
     .update(games)
     .set({ state: GameState.EXPLORING, wildPokemonId: null, updatedAt: new Date() })
     .where(eq(games.id, gameId));
 
-  return { playerMove: { id: 0, name: 'pokeball', type: 'normal' }, opponentMove: { id: 0, name: 'none', type: 'normal' }, captured: true };
+  return getPokemon(game.wildPokemonId);
 }

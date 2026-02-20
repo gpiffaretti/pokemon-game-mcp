@@ -14,10 +14,11 @@ export async function getPokemon(req: Request, res: Response, next: NextFunction
 export async function getArea(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const areaId = Number(req.params.areaId);
-    const [area, pokemon] = await Promise.all([
+    const [area, encounters] = await Promise.all([
       pokedexService.getArea(areaId),
       pokedexService.getPokemonForArea(areaId),
     ]);
+    const pokemon = await Promise.all(encounters.map((enc) => pokedexService.getPokemon(enc.pokemonId)));
     res.json({ ...area, pokemon });
   } catch (err) {
     next(err);

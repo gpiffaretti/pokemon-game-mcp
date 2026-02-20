@@ -5,14 +5,15 @@ export const endpoints = {
     finish: (gameId: string) => `/games/${gameId}/finish`,
   },
   pokemon: {
+    starterOptions: () => `/games/starter-options`,
     captured: (gameId: string) => `/games/${gameId}/captured`,
-    starting: (gameId: string) => `/games/${gameId}/starting`,
-    startingMoves: (gameId: string) => `/games/${gameId}/starting/moves`,
+    current: (gameId: string) => `/games/${gameId}/current`,
+    currentMoves: (gameId: string) => `/games/${gameId}/current/moves`,
   },
   area: {
     current: (gameId: string) => `/games/${gameId}/current`,
     move: (gameId: string) => `/games/${gameId}/move`,
-    explore: (gameId: string) => `/games/${gameId}/explore`,
+    findWildPokemon: (gameId: string) => `/games/${gameId}/find_wild_pokemon`,
   },
   battle: {
     start: (gameId: string) => `/games/${gameId}/start`,

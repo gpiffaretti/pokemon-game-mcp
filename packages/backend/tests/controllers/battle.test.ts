@@ -6,13 +6,23 @@ const mockBattleResult = {
   opponentMove: { id: 10, name: 'tackle', type: 'normal' },
 };
 
-const mockCaptureResult = { ...mockBattleResult, captured: true };
+const mockEnrichedGame = {
+  id: 'game-1',
+  state: 'BATTLING',
+  currentArea: null,
+  wildPokemon: { id: 25, name: 'pikachu', types: ['electric'], moves: [] },
+  currentPokemon: null,
+  createdAt: null,
+  updatedAt: null,
+};
+
+const mockCapturedPokemon = { id: 25, name: 'pikachu', types: ['electric'], moves: [] };
 
 jest.mock('../../src/services/battleService', () => ({
-  startBattle: jest.fn().mockResolvedValue(undefined),
+  startBattle: jest.fn().mockResolvedValue(mockEnrichedGame),
   performMove: jest.fn().mockResolvedValue(mockBattleResult),
   flee: jest.fn().mockResolvedValue(undefined),
-  throwPokeball: jest.fn().mockResolvedValue(mockCaptureResult),
+  throwPokeball: jest.fn().mockResolvedValue(mockCapturedPokemon),
 }));
 
 jest.mock('../../src/db/client', () => ({ db: {} }));
@@ -26,9 +36,11 @@ describe('Battle routes', () => {
     expect(res.body.error).toBeDefined();
   });
 
-  it('POST /api/v1/games/:gameId/start → 204 with valid wildPokemonId', async () => {
+  it('POST /api/v1/games/:gameId/start → 200 with enriched game', async () => {
     const res = await request(app).post('/api/v1/games/game-1/start').send({ wildPokemonId: 25 });
-    expect(res.status).toBe(204);
+    expect(res.status).toBe(200);
+    expect(res.body.state).toBe('BATTLING');
+    expect(res.body.wildPokemon).toBeDefined();
   });
 
   it('POST /api/v1/games/:gameId/move → 400 when moveId missing', async () => {
@@ -55,10 +67,11 @@ describe('Battle routes', () => {
     expect(res.body.error).toBeDefined();
   });
 
-  it('POST /api/v1/games/:gameId/catch → 200 with captured=true', async () => {
+  it('POST /api/v1/games/:gameId/catch → 200 with captured Pokemon', async () => {
     const res = await request(app).post('/api/v1/games/game-1/catch').send({ wildPokemonId: 25 });
     expect(res.status).toBe(200);
-    expect(res.body.captured).toBe(true);
+    expect(res.body.name).toBe('pikachu');
+    expect(res.body.id).toBe(25);
   });
 
   it('POST /api/v1/games/:gameId/catch → 409 when already captured', async () => {

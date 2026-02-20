@@ -4,8 +4,9 @@ import { GameState } from '../../src/types/game';
 const mockGame = {
   id: 'game-1',
   state: GameState.SELECTING_STARTING_POKEMON,
-  currentAreaId: null,
-  wildPokemonId: null,
+  currentArea: null,
+  wildPokemon: null,
+  currentPokemon: null,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };

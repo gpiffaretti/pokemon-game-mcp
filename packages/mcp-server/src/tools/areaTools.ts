@@ -44,14 +44,14 @@ export function registerAreaTools(server: McpServer): void {
   );
 
   server.registerTool(
-    'explore_area',
+    'look_for_wild_pokemon',
     {
-      description: 'Find a random wild Pokemon in the current area.',
+      description: 'Look for a random wild Pokemon in the current area. After calling this tool, use start_battle with the returned Pokemon ID to initiate a battle.',
       inputSchema: z.object({ gameId: z.string().describe('The game ID') }),
     },
     async ({ gameId }) => {
       try {
-        const pokemon = await apiPost<Pokemon>(endpoints.area.explore(gameId));
+        const pokemon = await apiPost<Pokemon>(endpoints.area.findWildPokemon(gameId));
         return {
           content: [
             {

@@ -29,6 +29,21 @@ jest.mock('../../src/db/client', () => ({
 
 jest.mock('../../src/services/pokedexService', () => ({
   getPokemonMoves: jest.fn().mockResolvedValue([{ id: 1, name: 'tackle', type: 'normal' }]),
+  getPokemon: jest.fn().mockResolvedValue({ id: 1, name: 'bulbasaur', types: ['grass'], moves: [] }),
+}));
+
+jest.mock('../../src/services/gameService', () => ({
+  enrichGame: jest.fn().mockImplementation((game: any) =>
+    Promise.resolve({
+      id: game.id,
+      state: game.state,
+      currentArea: null,
+      wildPokemon: null,
+      currentPokemon: { id: game.currentPokemonId, name: 'bulbasaur', types: ['grass'], moves: [] },
+      createdAt: game.createdAt,
+      updatedAt: game.updatedAt,
+    })
+  ),
 }));
 
 import * as pokemonService from '../../src/services/pokemonService';
@@ -62,13 +77,13 @@ describe('pokemonService.capturePokemon', () => {
   });
 });
 
-describe('pokemonService.setStartingPokemon', () => {
+describe('pokemonService.setCurrentPokemon', () => {
   it('throws if game not found', async () => {
     mockWhere.mockResolvedValue([]);
     mockFrom.mockReturnValue({ where: mockWhere });
     mockSelect.mockReturnValue({ from: mockFrom });
 
-    await expect(pokemonService.setStartingPokemon('missing', 1)).rejects.toThrow('Game not found');
+    await expect(pokemonService.setCurrentPokemon('missing', 1)).rejects.toThrow('Game not found');
   });
 
   it('throws if game is in BATTLING state', async () => {
@@ -76,62 +91,49 @@ describe('pokemonService.setStartingPokemon', () => {
     mockFrom.mockReturnValue({ where: mockWhere });
     mockSelect.mockReturnValue({ from: mockFrom });
 
-    await expect(pokemonService.setStartingPokemon('game-1', 1)).rejects.toThrow('Cannot change starting pokemon during a battle');
+    await expect(pokemonService.setCurrentPokemon('game-1', 1)).rejects.toThrow('Cannot change current pokemon during a battle');
   });
 
-  it('upserts starting pokemon and transitions state from SELECTING to EXPLORING', async () => {
-    const starter = { gameId: 'game-1', pokemonId: 1, selectedAt: new Date() };
+  it('adds to captured and transitions state from SELECTING to EXPLORING for valid starter', async () => {
+    const updatedGame = { ...makeGame(GameState.EXPLORING), currentPokemonId: 1 };
     mockWhere.mockResolvedValue([makeGame(GameState.SELECTING_STARTING_POKEMON)]);
     mockFrom.mockReturnValue({ where: mockWhere });
     mockSelect.mockReturnValue({ from: mockFrom });
 
-    mockReturning.mockResolvedValue([starter]);
-    mockOnConflictDoUpdate.mockReturnValue({ returning: mockReturning });
-    mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate });
+    const mockOnConflictDoNothing = jest.fn().mockResolvedValue([]);
+    mockValues.mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
     mockInsert.mockReturnValue({ values: mockValues });
 
-    const mockUpdateWhere = jest.fn().mockResolvedValue([]);
+    const mockReturningUpdate = jest.fn().mockResolvedValue([updatedGame]);
+    const mockUpdateWhere = jest.fn().mockReturnValue({ returning: mockReturningUpdate });
     mockSet.mockReturnValue({ where: mockUpdateWhere });
     mockUpdate.mockReturnValue({ set: mockSet });
 
-    const result = await pokemonService.setStartingPokemon('game-1', 1);
-    expect(result).toEqual(starter);
-    expect(mockUpdate).toHaveBeenCalled();
-    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ state: GameState.EXPLORING }));
+    const result = await pokemonService.setCurrentPokemon('game-1', 1);
+    expect(result.id).toBe('game-1');
+    expect(result.state).toBe(GameState.EXPLORING);
+    expect(result).toHaveProperty('currentPokemon');
+    expect(result).not.toHaveProperty('currentPokemonId');
+    expect(mockInsert).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ state: GameState.EXPLORING, currentPokemonId: 1 }));
   });
+});
 
-  it('upserts starting pokemon without state transition when already EXPLORING', async () => {
-    const starter = { gameId: 'game-1', pokemonId: 2, selectedAt: new Date() };
+describe('pokemonService.getMovesForCurrentPokemon', () => {
+  it('throws if no current pokemon selected', async () => {
     mockWhere.mockResolvedValue([makeGame(GameState.EXPLORING)]);
     mockFrom.mockReturnValue({ where: mockWhere });
     mockSelect.mockReturnValue({ from: mockFrom });
 
-    mockReturning.mockResolvedValue([starter]);
-    mockOnConflictDoUpdate.mockReturnValue({ returning: mockReturning });
-    mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate });
-    mockInsert.mockReturnValue({ values: mockValues });
-
-    const result = await pokemonService.setStartingPokemon('game-1', 2);
-    expect(result).toEqual(starter);
-    expect(mockUpdate).not.toHaveBeenCalled();
+    await expect(pokemonService.getMovesForCurrentPokemon('game-1')).rejects.toThrow('No current pokemon selected');
   });
-});
 
-describe('pokemonService.getMovesForStartingPokemon', () => {
-  it('throws if no starting pokemon selected', async () => {
-    mockWhere.mockResolvedValue([]);
+  it('returns moves for the current pokemon', async () => {
+    mockWhere.mockResolvedValue([{ ...makeGame(GameState.EXPLORING), currentPokemonId: 1 }]);
     mockFrom.mockReturnValue({ where: mockWhere });
     mockSelect.mockReturnValue({ from: mockFrom });
 
-    await expect(pokemonService.getMovesForStartingPokemon('game-1')).rejects.toThrow('No starting pokemon selected');
-  });
-
-  it('returns moves for the starting pokemon', async () => {
-    mockWhere.mockResolvedValue([{ gameId: 'game-1', pokemonId: 1 }]);
-    mockFrom.mockReturnValue({ where: mockWhere });
-    mockSelect.mockReturnValue({ from: mockFrom });
-
-    const moves = await pokemonService.getMovesForStartingPokemon('game-1');
+    const moves = await pokemonService.getMovesForCurrentPokemon('game-1');
     expect(moves).toEqual([{ id: 1, name: 'tackle', type: 'normal' }]);
   });
 });

@@ -4,8 +4,8 @@ import * as pokemonController from '../controllers/pokemonController';
 const router = Router();
 
 router.get('/:gameId/captured', pokemonController.getCapturedPokemon);
-router.get('/:gameId/starting', pokemonController.getStartingPokemon);
-router.put('/:gameId/starting', pokemonController.setStartingPokemon);
-router.get('/:gameId/starting/moves', pokemonController.getMovesForStartingPokemon);
+router.get('/:gameId/current', pokemonController.getCurrentPokemon);
+router.put('/:gameId/current', pokemonController.setCurrentPokemon);
+router.get('/:gameId/current/moves', pokemonController.getMovesForCurrentPokemon);
 
 export default router;

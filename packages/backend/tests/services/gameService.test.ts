@@ -26,6 +26,11 @@ jest.mock('../../src/db/client', () => ({
   },
 }));
 
+jest.mock('../../src/services/pokedexService', () => ({
+  getArea: jest.fn().mockResolvedValue({ id: 1, name: 'pallet-town-area' }),
+  getPokemon: jest.fn().mockResolvedValue({ id: 1, name: 'bulbasaur', types: ['grass'], moves: [] }),
+}));
+
 import * as gameService from '../../src/services/gameService';
 
 beforeEach(() => {
@@ -33,7 +38,7 @@ beforeEach(() => {
 });
 
 describe('gameService.createGame', () => {
-  it('inserts a new game and returns it', async () => {
+  it('inserts a new game and returns enriched game', async () => {
     const newGame = makeGame(GameState.SELECTING_STARTING_POKEMON);
     mockReturning.mockResolvedValue([newGame]);
     mockValues.mockReturnValue({ returning: mockReturning });
@@ -41,19 +46,25 @@ describe('gameService.createGame', () => {
 
     const result = await gameService.createGame();
     expect(mockInsert).toHaveBeenCalled();
-    expect(result).toEqual(newGame);
+    expect(result.id).toBe('game-1');
+    expect(result.state).toBe(GameState.SELECTING_STARTING_POKEMON);
+    expect(result).not.toHaveProperty('currentAreaId');
+    expect(result).toHaveProperty('currentArea');
   });
 });
 
 describe('gameService.getGame', () => {
-  it('returns the game when found', async () => {
+  it('returns enriched game when found', async () => {
     const game = makeGame(GameState.EXPLORING);
     mockWhere.mockResolvedValue([game]);
     mockFrom.mockReturnValue({ where: mockWhere });
     mockSelect.mockReturnValue({ from: mockFrom });
 
     const result = await gameService.getGame('game-1');
-    expect(result).toEqual(game);
+    expect(result.id).toBe('game-1');
+    expect(result.state).toBe(GameState.EXPLORING);
+    expect(result).not.toHaveProperty('currentAreaId');
+    expect(result).toHaveProperty('currentArea');
   });
 
   it('throws when game not found', async () => {
