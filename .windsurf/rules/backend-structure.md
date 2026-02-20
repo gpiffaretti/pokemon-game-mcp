@@ -15,10 +15,15 @@ packages/backend/
 │   ├── middleware/          # Express middleware (logging, error handling, etc.)
 │   ├── types/               # TypeScript interfaces and types
 │   ├── utils/               # Pure helper functions
+│   ├── db/
+│   │   ├── client.ts        # Drizzle client instance (postgres.js + drizzle())
+│   │   └── schema.ts        # Drizzle table definitions (pgTable)
 │   └── app.ts               # Express app setup (no logic)
+├── drizzle/                 # Generated SQL migration files (drizzle-kit output)
 ├── tests/
 │   ├── controllers/
 │   └── services/
+├── drizzle.config.ts
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -76,10 +81,12 @@ packages/backend/
 
 ## Data Access
 
-- For this prototype, **no dedicated repository/DAO layer** is used
-- Services interact with PostgreSQL directly via a shared `db` client (e.g., `pg` pool) imported from `src/utils/db.ts`
-- All SQL queries live inside service files, co-located with the logic that uses them
-- If query complexity grows, extract to a `queries/` subfolder inside `src/` — do not introduce a full ORM layer without explicit direction
+- **Drizzle ORM** is used for all database access — no raw SQL strings
+- The shared Drizzle client is exported from `src/db/client.ts` (uses `postgres` driver)
+- Table definitions live in `src/db/schema.ts` using `pgTable` helpers
+- Services import `db` from `src/db/client.ts` and use Drizzle query builders (`db.select()`, `db.insert()`, `db.update()`, etc.)
+- Migrations are generated with `drizzle-kit generate` and applied with `drizzle-kit migrate`
+- No dedicated repository/DAO layer — Drizzle queries live directly in service files
 
 ## Error Handling
 
