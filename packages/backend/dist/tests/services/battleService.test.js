@@ -56,12 +56,26 @@ jest.mock('../../src/db/client', () => ({
         update: mockUpdate,
     },
 }));
+const mockPokemon = { id: 25, name: 'pikachu', types: ['electric'], moves: [mockMove] };
 jest.mock('../../src/services/pokemonService', () => ({
-    getCurrentPokemon: jest.fn().mockResolvedValue({ pokemonId: 1 }),
+    getCurrentPokemonRaw: jest.fn().mockResolvedValue({ pokemonId: 1 }),
     capturePokemon: jest.fn().mockResolvedValue({ gameId: 'game-1', pokemonId: 25 }),
 }));
 jest.mock('../../src/services/pokedexService', () => ({
     getPokemonMoves: jest.fn().mockResolvedValue([mockMove]),
+    getPokemon: jest.fn().mockResolvedValue(mockPokemon),
+    getArea: jest.fn().mockResolvedValue({ id: 1, name: 'pallet-town-area' }),
+}));
+jest.mock('../../src/services/gameService', () => ({
+    enrichGame: jest.fn().mockResolvedValue({
+        id: 'game-1',
+        state: 'BATTLING',
+        currentArea: null,
+        wildPokemon: mockPokemon,
+        currentPokemon: null,
+        createdAt: null,
+        updatedAt: null,
+    }),
 }));
 const battleService = __importStar(require("../../src/services/battleService"));
 const pokemonService = __importStar(require("../../src/services/pokemonService"));
@@ -85,8 +99,9 @@ describe('battleService.startBattle', () => {
         mockWhere.mockResolvedValue([makeGame({ state: game_1.GameState.EXPLORING })]);
         mockFrom.mockReturnValue({ where: mockWhere });
         mockSelect.mockReturnValue({ from: mockFrom });
-        const mockUpdateWhere = jest.fn().mockResolvedValue([]);
-        mockSet.mockReturnValue({ where: mockUpdateWhere });
+        const mockUpdateWhere = jest.fn().mockResolvedValue([makeGame()]);
+        const mockReturning2 = jest.fn().mockResolvedValue([makeGame()]);
+        mockSet.mockReturnValue({ where: jest.fn().mockReturnValue({ returning: mockReturning2 }) });
         mockUpdate.mockReturnValue({ set: mockSet });
         await battleService.startBattle('game-1', 25);
         expect(mockUpdate).toHaveBeenCalled();
@@ -138,18 +153,18 @@ describe('battleService.throwPokeball', () => {
         mockWhere.mockResolvedValue([makeGame({ state: game_1.GameState.EXPLORING })]);
         mockFrom.mockReturnValue({ where: mockWhere });
         mockSelect.mockReturnValue({ from: mockFrom });
-        await expect(battleService.throwPokeball('game-1', 25)).rejects.toThrow('No active battle');
+        await expect(battleService.throwPokeball('game-1')).rejects.toThrow('No active battle');
     });
-    it('captures pokemon and returns BattleResult with captured=true', async () => {
+    it('captures pokemon and returns the captured Pokemon object', async () => {
         mockWhere.mockResolvedValue([makeGame()]);
         mockFrom.mockReturnValue({ where: mockWhere });
         mockSelect.mockReturnValue({ from: mockFrom });
         const mockUpdateWhere = jest.fn().mockResolvedValue([]);
         mockSet.mockReturnValue({ where: mockUpdateWhere });
         mockUpdate.mockReturnValue({ set: mockSet });
-        const result = await battleService.throwPokeball('game-1', 25);
+        const result = await battleService.throwPokeball('game-1');
         expect(pokemonService.capturePokemon).toHaveBeenCalledWith('game-1', 25);
-        expect(result.captured).toBe(true);
+        expect(result).toEqual(mockPokemon);
     });
 });
 //# sourceMappingURL=battleService.test.js.map

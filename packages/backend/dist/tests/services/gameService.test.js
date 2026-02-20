@@ -57,29 +57,39 @@ jest.mock('../../src/db/client', () => ({
         update: mockUpdate,
     },
 }));
+jest.mock('../../src/services/pokedexService', () => ({
+    getArea: jest.fn().mockResolvedValue({ id: 1, name: 'pallet-town-area' }),
+    getPokemon: jest.fn().mockResolvedValue({ id: 1, name: 'bulbasaur', types: ['grass'], moves: [] }),
+}));
 const gameService = __importStar(require("../../src/services/gameService"));
 beforeEach(() => {
     jest.clearAllMocks();
 });
 describe('gameService.createGame', () => {
-    it('inserts a new game and returns it', async () => {
+    it('inserts a new game and returns enriched game', async () => {
         const newGame = makeGame(game_1.GameState.SELECTING_STARTING_POKEMON);
         mockReturning.mockResolvedValue([newGame]);
         mockValues.mockReturnValue({ returning: mockReturning });
         mockInsert.mockReturnValue({ values: mockValues });
         const result = await gameService.createGame();
         expect(mockInsert).toHaveBeenCalled();
-        expect(result).toEqual(newGame);
+        expect(result.id).toBe('game-1');
+        expect(result.state).toBe(game_1.GameState.SELECTING_STARTING_POKEMON);
+        expect(result).not.toHaveProperty('currentAreaId');
+        expect(result).toHaveProperty('currentArea');
     });
 });
 describe('gameService.getGame', () => {
-    it('returns the game when found', async () => {
+    it('returns enriched game when found', async () => {
         const game = makeGame(game_1.GameState.EXPLORING);
         mockWhere.mockResolvedValue([game]);
         mockFrom.mockReturnValue({ where: mockWhere });
         mockSelect.mockReturnValue({ from: mockFrom });
         const result = await gameService.getGame('game-1');
-        expect(result).toEqual(game);
+        expect(result.id).toBe('game-1');
+        expect(result.state).toBe(game_1.GameState.EXPLORING);
+        expect(result).not.toHaveProperty('currentAreaId');
+        expect(result).toHaveProperty('currentArea');
     });
     it('throws when game not found', async () => {
         mockWhere.mockResolvedValue([]);

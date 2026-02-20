@@ -149,7 +149,7 @@ describe('battleService.throwPokeball', () => {
     mockFrom.mockReturnValue({ where: mockWhere });
     mockSelect.mockReturnValue({ from: mockFrom });
 
-    await expect(battleService.throwPokeball('game-1', 25)).rejects.toThrow('No active battle');
+    await expect(battleService.throwPokeball('game-1')).rejects.toThrow('No active battle');
   });
 
   it('captures pokemon and returns the captured Pokemon object', async () => {
@@ -161,7 +161,7 @@ describe('battleService.throwPokeball', () => {
     mockSet.mockReturnValue({ where: mockUpdateWhere });
     mockUpdate.mockReturnValue({ set: mockSet });
 
-    const result = await battleService.throwPokeball('game-1', 25);
+    const result = await battleService.throwPokeball('game-1');
     expect(pokemonService.capturePokemon).toHaveBeenCalledWith('game-1', 25);
     expect(result).toEqual(mockPokemon);
   });

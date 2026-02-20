@@ -10,6 +10,7 @@ const schema_1 = require("../db/schema");
 const game_1 = require("../types/game");
 const pokedexService_1 = require("./pokedexService");
 const pokemonService_1 = require("./pokemonService");
+const gameService_1 = require("./gameService");
 async function startBattle(gameId, wildPokemonId) {
     const rows = await client_1.db.select().from(schema_1.games).where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId));
     if (rows.length === 0)
@@ -17,10 +18,12 @@ async function startBattle(gameId, wildPokemonId) {
     if (rows[0].state !== game_1.GameState.EXPLORING) {
         throw new Error('Can only start a battle while exploring');
     }
-    await client_1.db
+    const updatedRows = await client_1.db
         .update(schema_1.games)
         .set({ state: game_1.GameState.BATTLING, wildPokemonId, updatedAt: new Date() })
-        .where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId));
+        .where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId))
+        .returning();
+    return (0, gameService_1.enrichGame)(updatedRows[0]);
 }
 async function performMove(gameId, playerMoveId) {
     const rows = await client_1.db.select().from(schema_1.games).where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId));
@@ -32,7 +35,7 @@ async function performMove(gameId, playerMoveId) {
     }
     if (!game.wildPokemonId)
         throw new Error('No wild pokemon in battle');
-    const current = await (0, pokemonService_1.getCurrentPokemon)(gameId);
+    const current = await (0, pokemonService_1.getCurrentPokemonRaw)(gameId);
     if (!current)
         throw new Error('No current pokemon selected');
     const [playerMoves, opponentMoves] = await Promise.all([
@@ -57,18 +60,21 @@ async function flee(gameId) {
         .set({ state: game_1.GameState.EXPLORING, wildPokemonId: null, updatedAt: new Date() })
         .where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId));
 }
-async function throwPokeball(gameId, wildPokemonId) {
+async function throwPokeball(gameId) {
     const rows = await client_1.db.select().from(schema_1.games).where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId));
     if (rows.length === 0)
         throw new Error('Game not found');
-    if (rows[0].state !== game_1.GameState.BATTLING) {
+    const game = rows[0];
+    if (game.state !== game_1.GameState.BATTLING) {
         throw new Error('No active battle');
     }
-    await (0, pokemonService_1.capturePokemon)(gameId, wildPokemonId);
+    if (!game.wildPokemonId)
+        throw new Error('No wild pokemon in battle');
+    await (0, pokemonService_1.capturePokemon)(gameId, game.wildPokemonId);
     await client_1.db
         .update(schema_1.games)
         .set({ state: game_1.GameState.EXPLORING, wildPokemonId: null, updatedAt: new Date() })
         .where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId));
-    return { playerMove: { id: 0, name: 'pokeball', type: 'normal' }, opponentMove: { id: 0, name: 'none', type: 'normal' }, captured: true };
+    return (0, pokedexService_1.getPokemon)(game.wildPokemonId);
 }
 //# sourceMappingURL=battleService.js.map

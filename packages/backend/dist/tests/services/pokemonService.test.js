@@ -60,6 +60,18 @@ jest.mock('../../src/db/client', () => ({
 }));
 jest.mock('../../src/services/pokedexService', () => ({
     getPokemonMoves: jest.fn().mockResolvedValue([{ id: 1, name: 'tackle', type: 'normal' }]),
+    getPokemon: jest.fn().mockResolvedValue({ id: 1, name: 'bulbasaur', types: ['grass'], moves: [] }),
+}));
+jest.mock('../../src/services/gameService', () => ({
+    enrichGame: jest.fn().mockImplementation((game) => Promise.resolve({
+        id: game.id,
+        state: game.state,
+        currentArea: null,
+        wildPokemon: null,
+        currentPokemon: { id: game.currentPokemonId, name: 'bulbasaur', types: ['grass'], moves: [] },
+        createdAt: game.createdAt,
+        updatedAt: game.updatedAt,
+    })),
 }));
 const pokemonService = __importStar(require("../../src/services/pokemonService"));
 beforeEach(() => {
@@ -111,7 +123,10 @@ describe('pokemonService.setCurrentPokemon', () => {
         mockSet.mockReturnValue({ where: mockUpdateWhere });
         mockUpdate.mockReturnValue({ set: mockSet });
         const result = await pokemonService.setCurrentPokemon('game-1', 1);
-        expect(result).toEqual(updatedGame);
+        expect(result.id).toBe('game-1');
+        expect(result.state).toBe(game_1.GameState.EXPLORING);
+        expect(result).toHaveProperty('currentPokemon');
+        expect(result).not.toHaveProperty('currentPokemonId');
         expect(mockInsert).toHaveBeenCalled();
         expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ state: game_1.GameState.EXPLORING, currentPokemonId: 1 }));
     });

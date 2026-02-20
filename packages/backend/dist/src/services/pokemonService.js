@@ -4,6 +4,7 @@ exports.getStarterOptions = getStarterOptions;
 exports.getCapturedPokemon = getCapturedPokemon;
 exports.capturePokemon = capturePokemon;
 exports.getCurrentPokemon = getCurrentPokemon;
+exports.getCurrentPokemonRaw = getCurrentPokemonRaw;
 exports.setCurrentPokemon = setCurrentPokemon;
 exports.getMovesForCurrentPokemon = getMovesForCurrentPokemon;
 const drizzle_orm_1 = require("drizzle-orm");
@@ -11,12 +12,14 @@ const client_1 = require("../db/client");
 const schema_1 = require("../db/schema");
 const game_1 = require("../types/game");
 const pokedexService_1 = require("./pokedexService");
+const gameService_1 = require("./gameService");
 const STARTER_POKEMON_IDS = [1, 4, 7];
 async function getStarterOptions() {
     return Promise.all(STARTER_POKEMON_IDS.map((id) => (0, pokedexService_1.getPokemon)(id)));
 }
 async function getCapturedPokemon(gameId) {
-    return client_1.db.select().from(schema_1.capturedPokemon).where((0, drizzle_orm_1.eq)(schema_1.capturedPokemon.gameId, gameId));
+    const rows = await client_1.db.select().from(schema_1.capturedPokemon).where((0, drizzle_orm_1.eq)(schema_1.capturedPokemon.gameId, gameId));
+    return Promise.all(rows.map((r) => (0, pokedexService_1.getPokemon)(r.pokemonId)));
 }
 async function capturePokemon(gameId, pokemonId) {
     const existing = await client_1.db
@@ -33,6 +36,13 @@ async function capturePokemon(gameId, pokemonId) {
     return rows[0];
 }
 async function getCurrentPokemon(gameId) {
+    const rows = await client_1.db.select().from(schema_1.games).where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId));
+    if (rows.length === 0)
+        throw new Error('Game not found');
+    const { currentPokemonId } = rows[0];
+    return currentPokemonId != null ? (0, pokedexService_1.getPokemon)(currentPokemonId) : null;
+}
+async function getCurrentPokemonRaw(gameId) {
     const rows = await client_1.db.select().from(schema_1.games).where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId));
     if (rows.length === 0)
         throw new Error('Game not found');
@@ -72,10 +82,10 @@ async function setCurrentPokemon(gameId, pokemonId) {
     })
         .where((0, drizzle_orm_1.eq)(schema_1.games.id, gameId))
         .returning();
-    return updatedRows[0];
+    return (0, gameService_1.enrichGame)(updatedRows[0]);
 }
 async function getMovesForCurrentPokemon(gameId) {
-    const current = await getCurrentPokemon(gameId);
+    const current = await getCurrentPokemonRaw(gameId);
     if (!current)
         throw new Error('No current pokemon selected');
     return (0, pokedexService_1.getPokemonMoves)(current.pokemonId);

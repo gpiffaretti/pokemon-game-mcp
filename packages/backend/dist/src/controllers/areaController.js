@@ -38,6 +38,7 @@ exports.moveToArea = moveToArea;
 exports.findPokemonInArea = findPokemonInArea;
 const zod_1 = require("zod");
 const areaService = __importStar(require("../services/areaService"));
+const pokedexService = __importStar(require("../services/pokedexService"));
 const moveToAreaSchema = zod_1.z.object({
     areaId: zod_1.z.number({ error: 'areaId must be a positive integer' }).int().positive(),
 });
@@ -66,7 +67,8 @@ async function moveToArea(req, res, next) {
 }
 async function findPokemonInArea(req, res, next) {
     try {
-        const pokemon = await areaService.findPokemonInArea(req.params.gameId);
+        const areaPokemon = await areaService.findPokemonInArea(req.params.gameId);
+        const pokemon = await pokedexService.getPokemon(areaPokemon.pokemonId);
         res.json(pokemon);
     }
     catch (err) {

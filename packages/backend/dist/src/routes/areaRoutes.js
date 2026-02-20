@@ -38,6 +38,6 @@ const areaController = __importStar(require("../controllers/areaController"));
 const router = (0, express_1.Router)();
 router.get('/:gameId/current', areaController.getCurrentArea);
 router.put('/:gameId/move', areaController.moveToArea);
-router.post('/:gameId/explore', areaController.findPokemonInArea);
+router.post('/:gameId/find_wild_pokemon', areaController.findPokemonInArea);
 exports.default = router;
 //# sourceMappingURL=areaRoutes.js.map

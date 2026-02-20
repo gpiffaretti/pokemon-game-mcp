@@ -8,8 +8,9 @@ const game_1 = require("../../src/types/game");
 const mockGame = {
     id: 'game-1',
     state: game_1.GameState.SELECTING_STARTING_POKEMON,
-    currentAreaId: null,
-    wildPokemonId: null,
+    currentArea: null,
+    wildPokemon: null,
+    currentPokemon: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
 };

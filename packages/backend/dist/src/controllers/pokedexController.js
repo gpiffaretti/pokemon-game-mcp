@@ -49,10 +49,11 @@ async function getPokemon(req, res, next) {
 async function getArea(req, res, next) {
     try {
         const areaId = Number(req.params.areaId);
-        const [area, pokemon] = await Promise.all([
+        const [area, encounters] = await Promise.all([
             pokedexService.getArea(areaId),
             pokedexService.getPokemonForArea(areaId),
         ]);
+        const pokemon = await Promise.all(encounters.map((enc) => pokedexService.getPokemon(enc.pokemonId)));
         res.json({ ...area, pokemon });
     }
     catch (err) {
