@@ -12,6 +12,7 @@ if (!process.env.BACKEND_URL) {
 }
 
 async function main(): Promise<void> {
+  console.error('Starting MCP server initialization...');
   const server = new McpServer({ name: 'pokemon-battle', version: '1.0.0' });
 
   server.registerPrompt(
@@ -55,15 +56,18 @@ RULES:
     }),
   );
 
+  console.error('Registering tools...');
   registerGameTools(server);
   registerPokemonTools(server);
   registerAreaTools(server);
   registerBattleTools(server);
   registerPokedexTools(server);
+  console.error('All tools registered');
 
   const transport = new StdioServerTransport();
-  console.error("MCP server started");
+  console.error("MCP server started, connecting to transport...");
   await server.connect(transport);
+  console.error("MCP server connected successfully");
 }
 
 main().catch((err) => {
