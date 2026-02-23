@@ -51,11 +51,6 @@ pokeBattles/
 - **Types**: TypeScript interfaces and types for MCP functions
 - **Utils**: MCP-specific utility functions
 
-### Shared Package (`packages/shared/`)
-- **Types**: Common TypeScript interfaces used across packages
-- **Constants**: Shared constants and enums
-- **Utils**: Common utility functions used by multiple packages
-
 ## File Naming Conventions
 
 - Use **PascalCase** for class files and TypeScript interfaces
