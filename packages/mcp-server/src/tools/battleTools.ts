@@ -2,8 +2,9 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { apiPost } from '../client/apiClient';
 import { endpoints } from '../client/endpoints';
-import { MoveResult, BattleResult } from '../types/battle';
-import { formatMoveResult, formatBattleResult } from '../utils/formatters';
+import { MoveResult, BattleResult, CaptureResult } from '../types/battle';
+import { Pokemon } from '../types/pokemon';
+import { formatMoveResult, formatBattleResult, formatCaptureResult } from '../utils/formatters';
 import { formatError } from '../utils/errors';
 
 export function registerBattleTools(server: McpServer): void {
@@ -76,8 +77,9 @@ export function registerBattleTools(server: McpServer): void {
     },
     async ({ gameId }) => {
       try {
-        const result = await apiPost<BattleResult>(endpoints.battle.catch(gameId));
-        return { content: [{ type: 'text' as const, text: formatBattleResult(result) }] };
+        const capturedPokemon = await apiPost<Pokemon>(endpoints.battle.catch(gameId));
+        const result: CaptureResult = { capturedPokemon };
+        return { content: [{ type: 'text' as const, text: formatCaptureResult(result) }] };
       } catch (err) {
         return { content: [{ type: 'text' as const, text: `Error: ${formatError(err)}` }] };
       }

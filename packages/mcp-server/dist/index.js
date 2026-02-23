@@ -45711,6 +45711,9 @@ function formatBattleResult(result) {
   if (result.fled) text += " You fled the battle!";
   return text;
 }
+function formatCaptureResult(result) {
+  return `You caught the wild Pokemon! ${formatPokemon(result.capturedPokemon)}`;
+}
 function formatArea(area) {
   return `Area #${area.id}: ${area.name}`;
 }
@@ -46004,8 +46007,9 @@ function registerBattleTools(server) {
     },
     async ({ gameId }) => {
       try {
-        const result = await apiPost(endpoints.battle.catch(gameId));
-        return { content: [{ type: "text", text: formatBattleResult(result) }] };
+        const capturedPokemon = await apiPost(endpoints.battle.catch(gameId));
+        const result = { capturedPokemon };
+        return { content: [{ type: "text", text: formatCaptureResult(result) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `Error: ${formatError2(err)}` }] };
       }
@@ -46063,7 +46067,6 @@ if (!process.env.BACKEND_URL) {
 async function main() {
   console.error("Starting MCP server initialization...");
   const server = new McpServer({ name: "pokemon-battle", version: "1.0.0" });
-  console.error("MCP server instance created");
   server.registerPrompt(
     "game_rules",
     {

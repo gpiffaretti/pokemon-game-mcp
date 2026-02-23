@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pokemon-game-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pokemon_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pokemon_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pokemon_game}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pokemon_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./packages/backend
+      dockerfile: Dockerfile
+    container_name: pokemon-game-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pokemon_user}:${POSTGRES_PASSWORD:-pokemon_password}@postgres:5432/${POSTGRES_DB:-pokemon_game}
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./packages/backend/src:/app/src
+      - ./packages/backend/drizzle:/app/drizzle
+    command: sh -c "npm run db:migrate && npm start"
+
+volumes:
+  postgres_data:
+    driver: local

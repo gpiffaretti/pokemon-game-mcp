@@ -1,6 +1,6 @@
 import { Game, CapturedPokemon } from '../types/game';
 import { Pokemon, Move } from '../types/pokemon';
-import { MoveResult, BattleResult } from '../types/battle';
+import { MoveResult, BattleResult, CaptureResult } from '../types/battle';
 import { Area, AreaEncounter } from '../types/area';
 
 export function formatGame(game: Game): string {
@@ -33,6 +33,10 @@ export function formatBattleResult(result: BattleResult): string {
   if (result.captured) text += ' You caught the wild Pokemon!';
   if (result.fled) text += ' You fled the battle!';
   return text;
+}
+
+export function formatCaptureResult(result: CaptureResult): string {
+  return `You caught the wild Pokemon! ${formatPokemon(result.capturedPokemon)}`;
 }
 
 export function formatArea(area: Area): string {

@@ -1,4 +1,4 @@
-import { Move } from './pokemon';
+import { Move, Pokemon } from './pokemon';
 
 export interface MoveResult {
   playerMove: Move;
@@ -10,4 +10,8 @@ export interface BattleResult {
   opponentMove: Move;
   captured?: boolean;
   fled?: boolean;
+}
+
+export interface CaptureResult {
+  capturedPokemon: Pokemon;
 }
